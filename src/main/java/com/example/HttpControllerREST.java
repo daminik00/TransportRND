@@ -20,7 +20,7 @@ public class HttpControllerREST extends HttpServlet {
 			} else
 				return "No POST data lastname or firstname";
 		}
-		return "Not POST data ";
+		return "Not POST data haha ";
 	}
 	@RequestMapping("/getTransport")
 	public String getTransport(HttpServletRequest request, HttpServletResponse response) {
