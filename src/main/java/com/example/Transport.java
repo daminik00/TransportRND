@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Transport {
@@ -30,6 +32,11 @@ public class Transport {
     
     public String AllString;
     public Map<String, ArrayList> mapJSON;
+    
+    
+    public HttpURLConnection urlConnection = null;
+    public BufferedReader reader = null;
+    public String resultJson = "";
 	
 	public Transport() {
 		try {
@@ -96,6 +103,25 @@ public class Transport {
                 forAdd.add(arrayTr[1]);
                 String lng = this.toFloatString(arrayTr[2]);
                 String lat = this.toFloatString(arrayTr[3]);
+                
+                String urlLat = "https://roads.googleapis.com/v1/nearestRoads?points=" + lng + "," + lat + "&key=AIzaSyAW3kP-9G3kMq2_3vxMVTJKaNPuEfTDgcQ";
+                URL url = new URL(urlLat);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line);
+                }
+
+                resultJson = buffer.toString();
+                JSONObject json = new JSONObject(resultJson);
+                
                 forAdd.add(lat);
                 forAdd.add(lng);
                 if (arrayTr[4].equals("") || arrayTr[4].equals(" ")) {
