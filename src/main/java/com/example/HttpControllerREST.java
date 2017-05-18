@@ -28,9 +28,16 @@ public class HttpControllerREST extends HttpServlet {
 			if (!request.getParameter("leftBut").equals("") && !request.getParameter("center").equals("")) {
 				String leftBut = request.getParameter("leftBut");
 				String center = request.getParameter("center");
-				Transport t = new Transport(leftBut, center);
-				Map<String, ArrayList> JsonMap = t.mapJSON;
-				return t.AllString;
+				if (request.getParameter("type") != null) {
+					int type = Integer.parseInt(request.getParameter("type"));
+					Transport t = new Transport(leftBut, center, type);
+					Map<String, ArrayList> JsonMap = t.mapJSON;
+					return t.AllString;
+				} else {
+					Transport t = new Transport(leftBut, center);
+					Map<String, ArrayList> JsonMap = t.mapJSON;
+					return t.AllString;
+				}
 			}
 		}
 		return "error";

@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.json.JSONObject;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Transport {
@@ -33,6 +31,8 @@ public class Transport {
     public String AllString;
     public Map<String, ArrayList> mapJSON;
     
+    public boolean tS = false;
+    public int type = 0;
     
     public HttpURLConnection urlConnection = null;
     public BufferedReader reader = null;
@@ -54,6 +54,28 @@ public class Transport {
 	public Transport(String leftBut, String center) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
+			this.leftBut = leftBut;
+			this.center = center;
+			double x1 = Double.valueOf(this.leftBut.split("::")[0]);
+			double y1 = Double.valueOf(this.leftBut.split("::")[1]);
+			double x2 = Double.valueOf(this.center.split("::")[0]);
+			double y2 = Double.valueOf(this.center.split("::")[1]);
+			this.rastCenter = this.reatLatLng(x1, y1, x2, y2);
+			this.url = new URL("https://www.its-rnd.ru/pikasonline/p04ktwt0.txt");
+			this.getTransport();
+			this.setClasses();
+			this.setJSON();
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public Transport(String leftBut, String center, int type) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			this.tS = true;
+			this.type = type;
 			this.leftBut = leftBut;
 			this.center = center;
 			double x1 = Double.valueOf(this.leftBut.split("::")[0]);
@@ -104,23 +126,7 @@ public class Transport {
                 String lng = this.toFloatString(arrayTr[2]);
                 String lat = this.toFloatString(arrayTr[3]);
                 
-                String urlLat = "https://roads.googleapis.com/v1/nearestRoads?points=" + lng + "," + lat + "&key=AIzaSyAW3kP-9G3kMq2_3vxMVTJKaNPuEfTDgcQ";
-                URL url = new URL(urlLat);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    buffer.append(line);
-                }
-
-                resultJson = buffer.toString();
-                JSONObject json = new JSONObject(resultJson);
+//                this.getCorLoc(lat, lng);
                 
                 forAdd.add(lat);
                 forAdd.add(lng);
@@ -177,7 +183,7 @@ public class Transport {
             String lat = (String) busTime.get(1);
             String lng = (String) busTime.get(2);
             String route = (String) busTime.get(0);
-
+            System.out.println(busTime.toString());
             int incline = Integer.parseInt((String) busTime.get(4));
             int speed = Integer.parseInt((String) busTime.get(3));
 
@@ -239,6 +245,44 @@ public class Transport {
         this.Trolleybus = trolleybus;
     }
 	
+	public ArrayList<String> getCorLoc(String lat, String lng) {
+		try {
+			ArrayList<String> newAr = new ArrayList();
+			
+			String urlLat = "https://roads.googleapis.com/v1/nearestRoads?points=" + lat + "," + lng + "&key=AIzaSyAZby8JXvHkGee-6SNbIjN4bsriYkpDomc";
+//	        System.out.println(urlLat);
+	        
+	        URL url = new URL(urlLat);
+	        urlConnection = (HttpURLConnection) url.openConnection();
+	        urlConnection.setRequestMethod("GET");
+	        urlConnection.connect();
+	        InputStream inputStream = urlConnection.getInputStream();
+	        StringBuffer buffer = new StringBuffer();
+	
+	        reader = new BufferedReader(new InputStreamReader(inputStream));
+	
+	        String line;
+	        while ((line = reader.readLine()) != null) {
+	            buffer.append(line);
+	        }
+	
+	        resultJson = buffer.toString();
+	        
+//	        String[] lat = resultJson.split("{\"snappedPoints\": [{\"location\": {\"latitude\": \")");
+	        newAr.add(resultJson.split("latitude")[1].split(": ")[1].split(",")[0]);
+	        newAr.add(resultJson.split("longitude")[1].split(": ")[1].split(" }")[0]);
+	        
+	        
+//	        System.out.println(resultJson.split("longitude")[1].split(": ")[1].split(" }")[0]);
+			
+			return newAr;
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
 	public String toFloatString(String str) {
         char[] arrayChar = str.toCharArray();
         int length = arrayChar.length;
@@ -297,6 +341,32 @@ public class Transport {
 				}
 			}
 			trans.put("\"Trolleybus\"", al);
+			if (this.tS) {
+				switch(this.type) {
+				case 0:
+					trans.remove("\"Tram\"");
+					trans.remove("\"Minibus\"");
+					trans.remove("\"Trolleybus\"");
+					break;
+				case 1:
+					trans.remove("\"Tram\"");
+					trans.remove("\"Bus\"");
+					trans.remove("\"Trolleybus\"");
+					break;
+				case 2:
+					trans.remove("\"Tram\"");
+					trans.remove("\"Minibus\"");
+					trans.remove("\"Bus\"");
+					break;
+				case 3:
+					trans.remove("\"Bus\"");
+					trans.remove("\"Minibus\"");
+					trans.remove("\"Trolleybus\"");
+					break;
+				default: break;
+				}
+			}
+			
 			this.mapJSON = trans;
 			this.AllString = trans.toString().replaceAll("=", ":");
 			return this.AllString;
